@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Salud Ocupacional</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    header {
+      padding: 24px;
+      background: #1769e0;
+      color: white;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 12px;
+    }
+
+    button {
+      padding: 10px 16px;
+      color: white;
+      background: #1769e0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+
+    th { background: #eaf1ff; }
+    #mensaje { margin-top: 16px; }
+    .error { color: #b91c1c; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sistema de Salud Ocupacional</h1>
+    <p>Consulta de empleados registrados</p>
+  </header>
+
+  <main>
+    <h2>Empleados</h2>
+    <button id="recargar">Actualizar información</button>
+    <p id="mensaje">Conectando con el servidor...</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Cédula</th>
+          <th>Nombres</th>
+          <th>Apellidos</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody id="empleados"></tbody>
+    </table>
+  </main>
+
+  <script>
+    async function cargarEmpleados() {
+      const mensaje = document.getElementById("mensaje");
+      const tabla = document.getElementById("empleados");
+
+      mensaje.textContent = "Consultando el backend...";
+      mensaje.className = "";
+      tabla.replaceChildren();
+
+      try {
+        const respuesta = await fetch("/api/empleados");
+
+        if (!respuesta.ok) {
+          throw new Error("Error HTTP " + respuesta.status);
+        }
+
+        const resultado = await respuesta.json();
+
+        if (!resultado.success) {
+          throw new Error("La API no pudo devolver los empleados.");
+        }
+
+        resultado.data.forEach(empleado => {
+          const fila = document.createElement("tr");
+
+          [
+            empleado.id,
+            empleado.cedula,
+            empleado.nombres,
+            empleado.apellidos,
+            empleado.estado
+          ].forEach(valor => {
+            const celda = document.createElement("td");
+            celda.textContent = valor ?? "";
+            fila.appendChild(celda);
+          });
+
+          tabla.appendChild(fila);
+        });
+
+        mensaje.textContent =
+          "Consulta exitosa: " + resultado.total + " empleado(s).";
+      } catch (error) {
+        mensaje.textContent =
+          "No se pudo cargar la información: " + error.message;
+        mensaje.className = "error";
+      }
+    }
+
+    document.getElementById("recargar")
+      .addEventListener("click", cargarEmpleados);
+
+    cargarEmpleados();
+  </script>
+</body>
+</html>
